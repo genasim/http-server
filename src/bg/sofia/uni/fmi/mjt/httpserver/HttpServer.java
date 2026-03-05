@@ -1,7 +1,9 @@
 package bg.sofia.uni.fmi.mjt.httpserver;
 
+import bg.sofia.uni.fmi.mjt.httpserver.entities.HttpResponse;
 import bg.sofia.uni.fmi.mjt.httpserver.handlers.HttpHandler;
 import bg.sofia.uni.fmi.mjt.httpserver.routing.Router;
+import bg.sofia.uni.fmi.mjt.httpserver.routing.TrieRouter;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -70,5 +72,23 @@ public class HttpServer {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    // Example how the server might be used
+    static void main() {
+        var router = new TrieRouter();
+        router.get("/", (res) -> {
+            // The endpoint handler runs in a separate virtual thread
+            try {
+                Thread.sleep(5000);
+            } catch (Exception _) {
+            }
+            return HttpResponse.ok("Message received");
+        });
+        HttpServer server = new HttpServer(5050, router);
+
+        server.get("/test", _ -> HttpResponse.ok("Hello World!"));
+
+        server.start();
     }
 }

@@ -16,7 +16,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -100,15 +99,22 @@ class ClientRequestHandler implements Runnable {
 
     private static void writeResponse(OutputStream out, HttpResponse response) throws IOException {
         final String CRLF = "\r\n";
-        final String supportedHTTPVersion = "HTTP/1.1 ";
+        final String supportedHTTPVersion = "HTTP/1.0 ";
+        final StringBuilder sb = new StringBuilder();
 
-        out.write((supportedHTTPVersion + response.statusCode() + " " + response.statusMessage() + CRLF).getBytes());
+        sb.append(supportedHTTPVersion).append(response.statusCode()).append(' ').append(response.statusMessage())
+            .append(CRLF);
+        out.write(sb.toString().getBytes());
+        sb.setLength(0);
+
         for (Map.Entry<String, String> header : response.headers().entrySet()) {
-            out.write((header.getKey() + ": " + header.getValue() + CRLF).getBytes());
+            sb.append(header.getKey()).append(": ").append(header.getValue()).append(CRLF);
+            out.write(sb.toString().getBytes());
+            sb.setLength(0);
         }
+        out.write(CRLF.getBytes());
 
         if (response.headers().containsKey(CommonHeaders.CONTENT_LENGTH.value())) {
-            out.write(CRLF.getBytes());
             out.write(response.body());
         }
     }
@@ -151,12 +157,7 @@ class ClientRequestHandler implements Runnable {
             totalRead += read;
         }
 
-        byte[] bytes = new byte[totalRead];
-        for (int i = 0; i < totalRead; i++) {
-            bytes[i] = (byte) buffer[i];
-        }
-
-        return new String(bytes, StandardCharsets.UTF_8);
+        return String.valueOf(buffer);
     }
 
 
